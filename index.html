@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Buda, TX Houses for Rent — 3BD/2BA Under $2,300, Fenced Yard + Bathtub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --ink: #1c1917;
+    --sub: #6b6560;
+    --line: #e7e2db;
+    --accent: #b45309;
+    --bg: #faf8f5;
+    --card: #ffffff;
+    --fav: #d6336c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    padding: 32px 24px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  header h1 { font-size: 28px; margin: 0 0 8px; }
+  header p.desc { color: var(--sub); font-size: 15px; line-height: 1.5; max-width: 900px; margin: 0 0 16px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: #fdf3e7;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .tabs {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--sub);
+    padding: 12px 2px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .controls {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 18px 24px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: flex-end;
+  }
+  .controls .field { display: flex; flex-direction: column; gap: 4px; }
+  .controls label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--sub); font-weight: 700; }
+  .controls select {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+    background: var(--card);
+    color: var(--ink);
+  }
+  .count { margin-left: auto; color: var(--sub); font-size: 13px; align-self: center; }
+  main { max-width: 1200px; margin: 0 auto; padding: 20px 24px 60px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .photo-wrap { position: relative; aspect-ratio: 4/3; background: #eee; }
+  .photo-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-wrap.noimg { display: flex; align-items: center; justify-content: center; color: var(--sub); font-size: 13px; }
+  .price-badge {
+    position: absolute; bottom: 10px; left: 10px;
+    background: rgba(28,25,23,0.85); color: #fff;
+    padding: 5px 10px; border-radius: 8px; font-weight: 700; font-size: 14px;
+  }
+  .fav-btn {
+    position: absolute; top: 10px; right: 10px;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,0.9);
+    font-size: 17px; cursor: pointer; color: #b8b3ac;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fav-btn.active { color: var(--fav); }
+  .content { padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .content h3 { margin: 0; font-size: 16px; }
+  .specs { color: var(--sub); font-size: 13px; }
+  .feat-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .feat-tag {
+    background: #f1efe9; color: var(--ink); font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .row { font-size: 13px; }
+  .row .label { color: var(--sub); font-weight: 600; margin-right: 4px; }
+  .row.details { color: var(--ink); line-height: 1.4; }
+  .agent-box {
+    background: #f8f6f2; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 1.4;
+  }
+  .actions { margin-top: auto; }
+  .btn {
+    display: block; text-align: center; background: var(--accent); color: #fff;
+    text-decoration: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 14px;
+  }
+  .empty { text-align: center; color: var(--sub); padding: 60px 0; display: none; }
+  #mapEl { height: 560px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
+  .map-popup { text-align: center; font-size: 13px; }
+  .map-popup img { width: 160px; height: 110px; object-fit: cover; border-radius: 6px; margin-bottom: 6px; }
+  .map-popup .mp-price { font-weight: 700; }
+  .map-popup .mp-addr { margin: 2px 0 6px; }
+  .map-popup a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  footer {
+    max-width: 1200px; margin: 0 auto; padding: 0 24px 60px;
+    color: var(--sub); font-size: 12px; line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Buda, TX — 3BD/2BA Houses for Rent Under $2,300/mo</h1>
+  <p class="desc">2 matching houses, sourced from HAR.com (Houston/Austin MLS) on Aug 20, 2026. Every listing was individually verified for a fenced backyard and pet-friendly policy from the description and structured listing data, and the presence of a real bathtub (not just a shower) was confirmed by visually inspecting the listing photos, not just relying on text or tags. Data may change, so confirm directly with the listing agent before applying.</p>
+  <div class="badges">
+    <span class="badge">Fenced backyard</span>
+    <span class="badge">Bathtub (photo-verified)</span>
+    <span class="badge">Pet friendly</span>
+    <span class="badge">3+ bed / 2+ bath</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="list">List</button>
+  <button class="tab-btn" data-tab="map">Map</button>
+  <button class="tab-btn" data-tab="favorites">Favorites <span id="favCount"></span></button>
+</nav>
+
+<div class="controls" id="listControls">
+  <div class="field">
+    <label>Sort by</label>
+    <select id="sortBy">
+      <option value="price-asc">Price: Low to High</option>
+      <option value="price-desc">Price: High to Low</option>
+      <option value="sqft-desc">Sqft: Largest First</option>
+      <option value="newest">Newest Build</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Max price</label>
+    <select id="maxPrice">
+      <option value="2300">$2,300</option>
+      <option value="2100">$2,100</option>
+      <option value="2000">$2,000</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Min beds</label>
+    <select id="minBeds">
+      <option value="0">Any</option>
+      <option value="3">3+</option>
+      <option value="4">4+</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Min full baths</label>
+    <select id="minBaths">
+      <option value="0">Any</option>
+      <option value="2">2+</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Min sqft</label>
+    <select id="minSqft">
+      <option value="0">Any</option>
+      <option value="1200">1,200+</option>
+      <option value="1500">1,500+</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Zip code</label>
+    <select id="zip">
+      <option value="all">All</option>
+    </select>
+  </div>
+  <div class="count" id="count"></div>
+</div>
+
+<main>
+  <div class="tab-panel active" id="panel-list">
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="emptyList">No listings match your filters.</div>
+  </div>
+  <div class="tab-panel" id="panel-map">
+    <div id="mapEl"></div>
+  </div>
+  <div class="tab-panel" id="panel-favorites">
+    <div class="count" id="favCount2" style="margin-bottom:12px;"></div>
+    <div class="grid" id="favGrid"></div>
+    <div class="empty" id="emptyFav">You haven't favorited any listings yet. Click the &#9829; on a card to save it here.</div>
+  </div>
+</main>
+
+<footer>
+  Source: HAR.com (Houston Association of REALTORS&reg; MLS, covering Austin/Buda) search for Buda, TX &middot; Single Family &middot; For Rent &middot; 3+ bedrooms &middot; 2+ baths &middot; under $2,300/mo. Of 52 matching listings, 4 explicitly described both a fenced backyard and a tub. Two of those (121 Guemal Rd and 2428 Green Meadows Ln) were excluded after their photo galleries were checked in full and contained no bathroom photo to confirm an actual tub was present, so the tub could not be visually verified for those. The 2 listings shown here were confirmed by direct photo inspection to have a real bathtub. Contact the listing agent directly to confirm current availability, exact deposit terms, and pet policy details before applying.
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const listings = [
+  {
+    id: "travertine",
+    address: "437 Travertine Trl, Buda, TX 78610",
+    zip: "78610",
+    price: 1900,
+    deposit: 1900,
+    beds: 3, bathsFull: 2, bathsHalf: 0,
+    sqft: 1567, yearBuilt: 2012,
+    photo: "https://pics.harstatic.com/ABORTX/243109932/hr/1.jpeg",
+    lat: 30.06002684, lng: -97.82274643,
+    link: "https://www.har.com/homedetail/437-travertine-trl-buda-tx-78610/9904283",
+    agentName: "Leslie Martine", brokerage: "Embark Realty, LLC", phone: "(512) 748-5743",
+    details: "Charming cottage style house with covered front porch, bright open floor plan, and high ceilings. New vinyl plank flooring in bedrooms, no carpet. Large master suite has a separate shower, garden tub, and walk-in closet. Granite counters and stainless steel appliances. Large fenced yard and two-car garage. Community amenities include a park, walking trails, and pool. Easy access to I-35."
+  },
+  {
+    id: "stonerim",
+    address: "1541 Stone Rim Loop, Buda, TX 78610",
+    zip: "78610",
+    price: 2050,
+    deposit: 1845,
+    beds: 3, bathsFull: 2, bathsHalf: 0,
+    sqft: 1596, yearBuilt: 2009,
+    photo: "https://pics.harstatic.com/ABORTX/240022551/hr/1.jpeg",
+    lat: 30.06685212, lng: -97.82487387,
+    link: "https://www.har.com/homedetail/1541-stone-rim-loop-buda-tx-78610/3877271",
+    agentName: "Derrick Gonzales", brokerage: "Keyrenter Property Management", phone: "(512) 694-6910",
+    details: "Inviting 3-bedroom, 2-bathroom home with a bright open floor plan for everyday living and entertaining. Modern kitchen with granite counters, a spacious island, and plenty of cabinet space, plus recessed lighting and ceiling fans throughout. Primary suite has dual vanities, a walk-in closet, a soaking tub, and a separate walk-in shower. Fully fenced backyard, great for pets or outdoor gatherings. Close to shopping, dining, parks, and major commuter routes."
+  }
+];
+
+// ---------- Favorites (localStorage) ----------
+const FAV_KEY = "buda_rentals_favorites";
+function getFavs() {
+  try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch(e) { return []; }
+}
+function setFavs(arr) {
+  try { localStorage.setItem(FAV_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+function toggleFav(id) {
+  let favs = getFavs();
+  if (favs.includes(id)) favs = favs.filter(f => f !== id);
+  else favs.push(id);
+  setFavs(favs);
+  renderAll();
+}
+
+// ---------- Card rendering ----------
+function fmtPrice(n) { return "$" + n.toLocaleString() + "/mo"; }
+function fmtBaths(l) {
+  let s = l.bathsFull + " full";
+  if (l.bathsHalf) s += " & " + l.bathsHalf + " half";
+  return s + " bath" + (l.bathsFull + l.bathsHalf > 1 ? "s" : "");
+}
+
+function cardHTML(l) {
+  const favs = getFavs();
+  const isFav = favs.includes(l.id);
+  return `
+    <div class="card" data-id="${l.id}">
+      <div class="photo-wrap">
+        <img src="${l.photo}" alt="${l.address}" loading="lazy" onerror="this.onerror=null;this.src='';this.parentElement.classList.add('noimg');this.alt='Photo unavailable';">
+        <div class="price-badge">${fmtPrice(l.price)}</div>
+        <button class="fav-btn ${isFav?'active':''}" title="Save to favorites" onclick="toggleFav('${l.id}')">&#9829;</button>
+      </div>
+      <div class="content">
+        <h3>${l.address}</h3>
+        <div class="specs">${l.beds} bed / ${fmtBaths(l)} &middot; ${l.sqft.toLocaleString()} sq ft &middot; built ${l.yearBuilt}</div>
+        <div class="feat-tags">
+          <span class="feat-tag">Fenced yard</span>
+          <span class="feat-tag">Bathtub</span>
+          <span class="feat-tag">Pet friendly</span>
+        </div>
+        <div class="row"><span class="label">Deposit</span> $${l.deposit.toLocaleString()}</div>
+        <div class="row details"><span class="label">Details</span> ${l.details}</div>
+        <div class="agent-box"><b>${l.agentName}</b> &middot; ${l.brokerage}<br>${l.phone}</div>
+        <div class="actions">
+          <a class="btn" href="${l.link}" target="_blank" rel="noopener">View Listing on HAR.com &rarr;</a>
+        </div>
+      </div>
+    </div>`;
+}
+
+function applyFilters(data) {
+  const maxPrice = parseInt(document.getElementById('maxPrice').value, 10);
+  const minBeds = parseInt(document.getElementById('minBeds').value, 10);
+  const minBaths = parseInt(document.getElementById('minBaths').value, 10);
+  const minSqft = parseInt(document.getElementById('minSqft').value, 10);
+  const zip = document.getElementById('zip').value;
+  let out = data.filter(l =>
+    l.price <= maxPrice &&
+    l.beds >= minBeds &&
+    l.bathsFull >= minBaths &&
+    l.sqft >= minSqft &&
+    (zip === 'all' || l.zip === zip)
+  );
+  const sortBy = document.getElementById('sortBy').value;
+  if (sortBy === 'price-asc') out.sort((a,b) => a.price - b.price);
+  else if (sortBy === 'price-desc') out.sort((a,b) => b.price - a.price);
+  else if (sortBy === 'sqft-desc') out.sort((a,b) => b.sqft - a.sqft);
+  else if (sortBy === 'newest') out.sort((a,b) => b.yearBuilt - a.yearBuilt);
+  return out;
+}
+
+function renderList() {
+  const filtered = applyFilters(listings);
+  const grid = document.getElementById('grid');
+  grid.innerHTML = filtered.map(cardHTML).join('');
+  document.getElementById('count').textContent = filtered.length + ' of ' + listings.length + ' shown';
+  document.getElementById('emptyList').style.display = filtered.length ? 'none' : 'block';
+}
+
+function renderFavorites() {
+  const favs = getFavs();
+  const favListings = listings.filter(l => favs.includes(l.id));
+  document.getElementById('favGrid').innerHTML = favListings.map(cardHTML).join('');
+  document.getElementById('emptyFav').style.display = favListings.length ? 'none' : 'block';
+  const label = favs.length + (favs.length === 1 ? ' saved listing' : ' saved listings');
+  document.getElementById('favCount2').textContent = label;
+  document.getElementById('favCount').textContent = favs.length ? '(' + favs.length + ')' : '';
+}
+
+function renderAll() {
+  renderList();
+  renderFavorites();
+}
+
+// ---------- Zip options ----------
+function populateZips() {
+  const sel = document.getElementById('zip');
+  const zips = [...new Set(listings.map(l => l.zip))].sort();
+  zips.forEach(z => {
+    const opt = document.createElement('option');
+    opt.value = z; opt.textContent = z;
+    sel.appendChild(opt);
+  });
+}
+
+// ---------- Tabs ----------
+function initTabs() {
+  const btns = document.querySelectorAll('.tab-btn');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      document.getElementById('listControls').style.display = btn.dataset.tab === 'list' ? 'flex' : 'none';
+      if (btn.dataset.tab === 'map' && window.__leafletMap) {
+        setTimeout(() => {
+          window.__leafletMap.invalidateSize();
+          if (window.__mapBounds && window.__mapBounds.length) {
+            window.__leafletMap.fitBounds(window.__mapBounds, {padding: [30,30]});
+          }
+        }, 50);
+      }
+    });
+  });
+}
+
+// ---------- Map ----------
+function initMap() {
+  const map = L.map('mapEl').setView([30.06, -97.83], 12);
+  window.__leafletMap = map;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  const bounds = [];
+  listings.forEach(l => {
+    const marker = L.circleMarker([l.lat, l.lng], {
+      radius: 9, fillColor: '#b45309', color: '#fff', weight: 2, fillOpacity: 0.95
+    }).addTo(map);
+    bounds.push([l.lat, l.lng]);
+
+    const popupHTML = `
+      <div class="map-popup">
+        <img src="${l.photo}" alt="${l.address}" onerror="this.style.display='none'">
+        <div class="mp-price">${fmtPrice(l.price)}</div>
+        <div class="mp-addr">${l.address}</div>
+        <a href="${l.link}" target="_blank" rel="noopener">View Listing &rarr;</a>
+      </div>`;
+    marker.bindPopup(popupHTML, {closeButton: true});
+    marker.on('mouseover', () => marker.openPopup());
+    marker.on('click', () => { window.open(l.link, '_blank'); });
+  });
+  window.__mapBounds = bounds;
+  if (bounds.length) map.fitBounds(bounds, {padding: [30,30]});
+}
+
+// ---------- Init ----------
+populateZips();
+initTabs();
+['sortBy','maxPrice','minBeds','minBaths','minSqft','zip'].forEach(id => {
+  document.getElementById(id).addEventListener('change', renderList);
+});
+renderAll();
+initMap();
+</script>
+</body>
+</html>
